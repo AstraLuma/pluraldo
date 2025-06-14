@@ -10,6 +10,7 @@ def entry(func):
     @functools.wraps(func)
     def _(*p, **kw):
         anyio.run(lambda: func(*p, **kw))
+
     return _
 
 
@@ -45,9 +46,11 @@ async def list():
     async for tid, title in ps.tasks_by_title():
         click.echo(f"{tid}: {title}")
 
+
 @cli.group()
 def task():
     pass
+
 
 @task.command()
 @entry

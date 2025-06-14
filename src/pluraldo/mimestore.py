@@ -1,6 +1,7 @@
 """
 A key/document store using MIMEish messages as the documents
 """
+
 import email.charset
 import email.message
 import email.parser
@@ -10,10 +11,13 @@ import typing
 import anyio
 
 
-_StorePolicy = email.policy.default.clone(linesep='\r\n', max_line_length=None, utf8=True)
+_StorePolicy = email.policy.default.clone(
+    linesep="\r\n", max_line_length=None, utf8=True
+)
+
 
 class _StoreCharset(email.charset.Charset):
-    output_charset = 'utf-8'
+    output_charset = "utf-8"
 
     def __init__(self):
         pass
@@ -42,7 +46,7 @@ class Document(email.message.Message):
         super().__init__(_StorePolicy)
 
     def __setitem__(self, name, val):
-        if name.lower() == 'mime-version':
+        if name.lower() == "mime-version":
             return
         else:
             super().__setitem__(name, val)
@@ -54,10 +58,12 @@ class Document(email.message.Message):
             super().set_payload(payload)
 
     @classmethod
-    def from_markdown(cls, body: str, headers: dict[str, str]|None=None) -> typing.Self:
+    def from_markdown(
+        cls, body: str, headers: dict[str, str] | None = None
+    ) -> typing.Self:
         self = cls()
         self.set_payload(body)
-        self.set_type('text/markdown')
+        self.set_type("text/markdown")
         if headers:
             for key, value in headers.items():
                 self[key] = value
@@ -97,7 +103,7 @@ class MimeStore:
             yield v
 
     def _file(self, key: str) -> anyio.Path:
-        assert '/' not in key
+        assert "/" not in key
         return self.root / key
 
     async def get(self, key: str) -> Document:
@@ -112,4 +118,4 @@ class MimeStore:
         await self._file(key).write_bytes(payload)
 
     async def del_(self, key: str):
-        await self._file(key).unlink() 
+        await self._file(key).unlink()
