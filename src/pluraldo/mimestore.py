@@ -82,6 +82,56 @@ class Document(email.message.Message):
         return p.parsebytes(message)
 
 
+# Characters that can't appear in the name, mostly Windows
+RESERVED_CHARS = '<>:"/\\|?*'
+_RC_TABLE = str.maketrans("", "", RESERVED_CHARS)
+
+# Illegal basenames, mostly Windows. The superscripts are not a mistake.
+RESERVED_BASES = [
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "COM¹",
+    "COM²",
+    "COM³",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
+    "LPT¹",
+    "LPT²",
+    "LPT³",
+]
+
+
+def _is_legal(file: anyio.Path) -> bool:
+    """
+    Checks that a filename is legal on all systems. Does not check parents.
+
+    This exists so that pluraldo's data can be synchronized between systems
+    """
+    if file.name.translate(_RC_TABLE) != file.name:
+        return False
+    if file.stem in RESERVED_BASES:
+        return False
+    return True
+
+
 class MimeStore:
     def __init__(self, root: anyio.Path):
         self.root = root
@@ -104,7 +154,10 @@ class MimeStore:
 
     def _file(self, key: str) -> anyio.Path:
         assert "/" not in key
-        return self.root / key
+        f = self.root / key
+        if not _is_legal(f):
+            raise ValueError(f"{key!r} isn't a valid filename on all systems")
+        return f
 
     async def get(self, key: str) -> Document:
         try:
