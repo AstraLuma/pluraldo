@@ -48,6 +48,24 @@ class PStore:
             del doc["Front"]
             doc["Front"] = name
 
+    async def get_project(self) -> str | None:
+        try:
+            doc = await self._store.get("_context")
+            proj = doc["Current-Project"]
+            if proj:
+                proj = proj.upper()
+            return proj
+        except KeyError:
+            return
+
+    async def set_project(self, name: str | None):
+        async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
+            if name:
+                del doc["Current-Project"]
+                doc["Current-Project"] = name.upper()
+            else:
+                del doc["Current-Project"]
+
     async def tasks_by_title(
         self, project: str | None = None
     ) -> typing.AsyncIterator[tuple[str, str]]:
@@ -68,20 +86,15 @@ class PStore:
         )
         await self._store.set("t-42", doc)
 
-    async def get_project(self) -> str | None:
-        try:
-            doc = await self._store.get("_context")
-            proj = doc["Current-Project"]
-            if proj:
-                proj = proj.upper()
-            return proj
-        except KeyError:
-            return
-
-    async def set_project(self, name: str | None):
-        async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
-            if name:
-                del doc["Current-Project"]
-                doc["Current-Project"] = name.upper()
-            else:
-                del doc["Current-Project"]
+    async def get_next_id(self, project: str) -> str:
+        """
+        Given a project, get an unused ID within it.
+        """
+        project = project.upper()
+        prefix = f"{project}-"
+        known_ids = [
+            did async for did, doc in self._store.items() if did.startswith(prefix)
+        ]
+        known_ints = [int(did.partition("-")[-1]) for did in known_ids]
+        largest = max(known_ints)
+        return f"{prefix}{largest+1}"
