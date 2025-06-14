@@ -16,12 +16,18 @@ def entry(func):
 
 @click.group()
 def cli():
+    """
+    Task tracking for systems
+    """
     pass
 
 
 @cli.command()
 @entry
 async def whoami():
+    """
+    Show the fronting alter
+    """
     ps = await PStore.get()
     name = await ps.get_front()
     if name is None:
@@ -34,6 +40,9 @@ async def whoami():
 @click.argument("name")
 @entry
 async def switch(name):
+    """
+    Change the fronting alter
+    """
     ps = await PStore.get()
     await ps.set_front(name)
     click.echo(f"=> switched to {name}")
@@ -41,19 +50,31 @@ async def switch(name):
 
 @cli.group()
 def task():
+    """
+    Manage tasks
+    """
     pass
 
 
 @task.command("ls")
+@click.option("--all", "show_all", is_flag=True, help="Show tasks in all projects")
 @entry
-async def task_ls():
+async def task_ls(show_all):
+    """
+    List tasks in the current project
+    """
     ps = await PStore.get()
     async for tid, title in ps.tasks_by_title():
         click.echo(f"{tid}: {title}")
 
 
 @task.command("add")
+@click.argument("project", required=False)
 @entry
-async def task_add():
+async def task_add(project):
+    """
+    Interactively add a task to PROJECT or the current one
+    """
+    print(f"{project=}")
     ps = await PStore.get()
     await ps.add_mock_task()
