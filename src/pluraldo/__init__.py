@@ -120,10 +120,15 @@ async def _resolve_task(ps: PStore, tid: str) -> str:
     """
     Given a potentially partial task id, resolve it to the full ID
     """
-    if "-":
+    if "-" in tid:
         # Project given, just do some normalization
         proj, _, tint = tid.partition("-")
         return f"{proj.upper()}-{tint}"
+    else:
+        project = await ps.get_project()
+        if not project:
+            raise click.UsageError("No project specified and no current project set")
+        return f"{project}-{tid}"
 
 
 @task.command("show")
