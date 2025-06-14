@@ -13,6 +13,8 @@ from .mimestore import MimeStore, Document
 
 class PStore:
     def __init__(self):
+        # Should this use click.get_app_dir() instead?
+        # https://click.palletsprojects.com/en/stable/api/#click.get_app_dir
         self._store = MimeStore(
             anyio.Path(platformdirs.user_data_dir("pluraldo", "Lumami"))
         )
@@ -43,14 +45,21 @@ class PStore:
 
     async def set_front(self, name: str):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
+            del doc["Front"]
             doc["Front"] = name
 
-    async def tasks_by_title(self) -> typing.AsyncIterator[tuple[str, str]]:
+    async def tasks_by_title(
+        self, project: str | None = None
+    ) -> typing.AsyncIterator[tuple[str, str]]:
         """
         Enumerate tasks by id and title
         """
+        if project:
+            prefix = f"{project.upper()}-"
+        else:
+            prefix = ""
         async for id, doc in self._store.items():
-            if doc["Kind"] == "task":
+            if doc["Kind"] == "task" and id.startswith(prefix):
                 yield id, doc["Title"]
 
     async def add_mock_task(self):
@@ -62,10 +71,16 @@ class PStore:
     async def get_project(self) -> str | None:
         try:
             doc = await self._store.get("_context")
-            return doc["Current-Project"]
+            proj = doc["Current-Project"]
+            if proj:
+                proj = proj.upper()
+            return proj
         except KeyError:
             return
 
-    async def set_project(self, name: str):
+    async def set_project(self, name: str | None):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
-            doc["Current-Project"] = name
+            if name:
+                doc["Current-Project"] = name.upper()
+            else:
+                del doc["Current-Project"]

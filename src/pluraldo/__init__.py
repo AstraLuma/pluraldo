@@ -48,6 +48,23 @@ async def switch(name):
     click.echo(f"=> switched to {name}")
 
 
+@cli.command()
+@click.argument("project", required=False)
+@entry
+async def workon(project):
+    """
+    Change the current project, or unset it
+    """
+    if project:
+        project = project.upper()
+    ps = await PStore.get()
+    await ps.set_project(project)
+    if project:
+        click.echo(f"=> working on {project}")
+    else:
+        click.echo("=> cleared project")
+
+
 @cli.group()
 def task():
     """
@@ -64,7 +81,10 @@ async def task_ls(show_all):
     List tasks in the current project
     """
     ps = await PStore.get()
-    async for tid, title in ps.tasks_by_title():
+    project = await ps.get_project()
+    if show_all:
+        project = None
+    async for tid, title in ps.tasks_by_title(project):
         click.echo(f"{tid}: {title}")
 
 
@@ -75,6 +95,10 @@ async def task_add(project):
     """
     Interactively add a task to PROJECT or the current one
     """
-    print(f"{project=}")
     ps = await PStore.get()
+    if not project:
+        project = await ps.get_project()
+    if not project:
+        raise click.UsageError("No project specified and no current project set")
+    project = project.upper()
     await ps.add_mock_task()
