@@ -14,8 +14,7 @@ def entry(func):
 
 
 @click.group()
-@entry
-async def cli():
+def cli():
     pass
 
 
@@ -45,3 +44,13 @@ async def list():
     ps = await PStore.get()
     async for tid, title in ps.tasks_by_title():
         click.echo(f"{tid}: {title}")
+
+@cli.group()
+def task():
+    pass
+
+@task.command()
+@entry
+async def add():
+    ps = await PStore.get()
+    await ps.add_mock_task()

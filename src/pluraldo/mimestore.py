@@ -39,7 +39,7 @@ class _StoreCharset(email.charset.Charset):
 
 class Document(email.message.Message):
     def __init__(self):
-        super().__init__(policy=_StorePolicy)
+        super().__init__(_StorePolicy)
 
     def __setitem__(self, name, val):
         if name.lower() == 'mime-version':
@@ -47,10 +47,16 @@ class Document(email.message.Message):
         else:
             super().__setitem__(name, val)
 
+    def set_payload(self, payload):
+        if isinstance(payload, str):
+            super().set_payload(payload, _StoreCharset())
+        else:
+            super().set_payload(payload)
+
     @classmethod
     def from_markdown(cls, body: str, headers: dict[str, str]|None=None) -> typing.Self:
         self = cls()
-        self.set_payload(body, _StoreCharset())
+        self.set_payload(body)
         self.set_type('text/markdown')
         if headers:
             for key, value in headers.items():
