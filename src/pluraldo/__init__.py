@@ -22,7 +22,6 @@ def cli():
     """
     Task tracking for systems
     """
-    pass
 
 
 @cli.command()
@@ -73,7 +72,6 @@ def task():
     """
     Manage tasks
     """
-    pass
 
 
 @task.command("ls")
@@ -104,11 +102,37 @@ async def task_add(project):
     if not project:
         raise click.UsageError("No project specified and no current project set")
     project = project.upper()
+    alter = await ps.get_front()
 
     tid = await ps.get_next_id(project)
-    task = Document.from_markdown("", {"Kind": "task", "Title": ""})
+    task = Document.from_markdown(
+        "", {"Kind": "task", "Title": "", "Creator": alter or "", "Assignee": ""}
+    )
 
     editor = TaskEditorApp(tid, task)
     await editor.run_async()
 
-    await ps.update_task(tid, task)
+    if task["Title"] or task.get_payload():
+        await ps.update_task(tid, task)
+
+
+@task.command("show")
+@click.argument("task")
+@entry
+async def task_show(task):
+    """
+    Show a task, either in the current project (42) or globally (PROJ-42)
+    """
+    ps = await PStore.get()
+    if "-" not in task:
+        project = await ps.get_project()
+        if not project:
+            raise click.UsageError("No project specified and no current project set")
+        task = f"{project}-{task}"
+    try:
+        doc = await ps.get_task(task)
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
+
+    # TODO: Format this nicely
+    click.echo(str(doc))

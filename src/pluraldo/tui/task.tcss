@@ -1,0 +1,14 @@
+TaskEditor {
+    layout: grid;
+    grid-size: 2;
+    grid-columns: auto 1fr;
+    grid-rows: auto auto auto 1fr;
+}
+
+TaskEditor > #body {
+    column-span: 2;
+}
+
+TaskEditor > Label {
+    padding: 1;
+}

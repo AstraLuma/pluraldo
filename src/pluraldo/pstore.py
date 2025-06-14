@@ -93,8 +93,11 @@ class PStore:
         if known_ints:
             largest = max(known_ints)
         else:
-            largest = 1
+            largest = 0
         return f"{prefix}{largest+1}"
+
+    async def get_task(self, tid: str) -> Document:
+        return await self._store.get(tid)
 
     async def update_task(self, tid: str, task: Document):
         assert task["Kind"] == "task"
