@@ -87,7 +87,7 @@ class PStore:
         project = project.upper()
         prefix = f"{project}-"
         known_ids = [
-            did async for did, doc in self._store.items() if did.startswith(prefix)
+            did async for did, _ in self._store.items() if did.startswith(prefix)
         ]
         known_ints = [int(did.partition("-")[-1]) for did in known_ids]
         if known_ints:

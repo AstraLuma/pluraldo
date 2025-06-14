@@ -108,7 +108,7 @@ async def task_add(project):
     tid = await ps.get_next_id(project)
     task = Document.from_markdown("", {"Kind": "task", "Title": ""})
 
-    editor = TaskEditorApp(task)
+    editor = TaskEditorApp(tid, task)
     await editor.run_async()
 
     await ps.update_task(tid, task)
