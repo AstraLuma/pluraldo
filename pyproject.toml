@@ -1,0 +1,18 @@
+[project]
+name = "pluraldo"
+version = "0.1.0"
+description = "todo for plurals"
+authors = [
+    {name = "Jamie Bliss",email = "jamie@ivyleav.es"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "anyio (>=4.9.0,<5.0.0)",
+    "platformdirs (>=4.3.8,<5.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
