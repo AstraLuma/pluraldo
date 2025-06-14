@@ -4,6 +4,9 @@ import anyio
 import click
 
 from .pstore import PStore
+from .mimestore import Document
+
+from .tui.task import TaskEditorApp
 
 
 def entry(func):
@@ -101,4 +104,11 @@ async def task_add(project):
     if not project:
         raise click.UsageError("No project specified and no current project set")
     project = project.upper()
-    await ps.add_mock_task()
+
+    tid = await ps.get_next_id(project)
+    task = Document.from_markdown("", {"Kind": "task", "Title": ""})
+
+    editor = TaskEditorApp(task)
+    await editor.run_async()
+
+    await ps.update_task(tid, task)

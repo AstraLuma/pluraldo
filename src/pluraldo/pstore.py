@@ -80,12 +80,6 @@ class PStore:
             if doc["Kind"] == "task" and id.startswith(prefix):
                 yield id, doc["Title"]
 
-    async def add_mock_task(self):
-        doc = Document.from_markdown(
-            "Help. Get it.", {"Kind": "task", "Title": "Get Help"}
-        )
-        await self._store.set("t-42", doc)
-
     async def get_next_id(self, project: str) -> str:
         """
         Given a project, get an unused ID within it.
@@ -96,5 +90,12 @@ class PStore:
             did async for did, doc in self._store.items() if did.startswith(prefix)
         ]
         known_ints = [int(did.partition("-")[-1]) for did in known_ids]
-        largest = max(known_ints)
+        if known_ints:
+            largest = max(known_ints)
+        else:
+            largest = 1
         return f"{prefix}{largest+1}"
+
+    async def update_task(self, tid: str, task: Document):
+        assert task["Kind"] == "task"
+        await self._store.set(tid, task)
