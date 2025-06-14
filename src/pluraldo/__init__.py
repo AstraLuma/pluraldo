@@ -9,7 +9,6 @@ from .pstore import PStore
 def entry(func):
     @functools.wraps(func)
     def _(*p, **kw):
-        print(f"entry {func=} {p=} {kw=}")
         anyio.run(lambda: func(*p, **kw))
     return _
 
@@ -38,3 +37,11 @@ async def switch(name):
     ps = await PStore.get()
     await ps.set_front(name)
     click.echo(f"=> switched to {name}")
+
+
+@cli.command()
+@entry
+async def list():
+    ps = await PStore.get()
+    async for tid, title in ps.tasks_by_title():
+        click.echo(f"{tid}: {title}")
