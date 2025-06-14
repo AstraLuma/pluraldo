@@ -30,7 +30,7 @@ class PStore:
         try:
             doc = await self._store.get(key)
         except KeyError:
-            doc = Document.from_headers(default_headers)
+            doc = Document.from_headers(**default_headers)
 
         yield doc
 
@@ -81,6 +81,7 @@ class PStore:
     async def set_project(self, name: str | None):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
             if name:
+                del doc["Current-Project"]
                 doc["Current-Project"] = name.upper()
             else:
                 del doc["Current-Project"]
