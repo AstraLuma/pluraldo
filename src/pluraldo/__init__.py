@@ -116,6 +116,16 @@ async def task_add(project):
         await ps.update_task(tid, task)
 
 
+async def _resolve_task(ps: PStore, tid: str) -> str:
+    """
+    Given a potentially partial task id, resolve it to the full ID
+    """
+    if "-":
+        # Project given, just do some normalization
+        proj, _, tint = tid.partition("-")
+        return f"{proj.upper()}-{tint}"
+
+
 @task.command("show")
 @click.argument("task")
 @entry
@@ -124,11 +134,7 @@ async def task_show(task):
     Show a task, either in the current project (42) or globally (PROJ-42)
     """
     ps = await PStore.get()
-    if "-" not in task:
-        project = await ps.get_project()
-        if not project:
-            raise click.UsageError("No project specified and no current project set")
-        task = f"{project}-{task}"
+    task = await _resolve_task(ps, task)
     try:
         doc = await ps.get_task(task)
     except KeyError:
@@ -136,3 +142,23 @@ async def task_show(task):
 
     # TODO: Format this nicely
     click.echo(str(doc))
+
+
+@task.command("edit")
+@click.argument("task")
+@entry
+async def task_edit(task):
+    """
+    Edit a task, either in the current project (42) or globally (PROJ-42)
+    """
+    ps = await PStore.get()
+    task = await _resolve_task(ps, task)
+    try:
+        doc = await ps.get_task(task)
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
+
+    editor = TaskEditorApp(task, doc)
+    await editor.run_async()
+
+    await ps.update_task(task, doc)
