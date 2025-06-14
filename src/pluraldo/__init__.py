@@ -37,3 +37,4 @@ async def whoami():
 async def switch(name):
     ps = await PStore.get()
     await ps.set_front(name)
+    click.echo(f"=> switched to {name}")

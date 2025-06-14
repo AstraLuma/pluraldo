@@ -1,6 +1,8 @@
 """
 Storage, but in pluraldo's terms
 """
+import typing
+
 import anyio
 import platformdirs
 
@@ -19,12 +21,24 @@ class PStore():
 
     async def get_front(self) -> str|None:
         try:
-            doc = await self._store.get('front')
+            doc = await self._store.get('_context')
         except KeyError:
             return
         else:
-            return doc['Name']
+            return doc['Front']
 
     async def set_front(self, name: str):
-        doc = Document.from_headers(Species='front', Name=name)
+        try:
+            doc = await self._store.get('_context')
+        except KeyError:
+            doc = Document.from_headers(Kind='context')
+        doc['Front'] = name
         await self._store.set('front', doc)
+
+    async def tasks_by_title(self) -> typing.AsyncIterator[tuple[str, str]]:
+        """
+        Enumerate tasks by id and title
+        """
+        async for id, doc in self._store.items():
+            if doc['Kind'] == 'task':
+                yield id, doc['Title']
