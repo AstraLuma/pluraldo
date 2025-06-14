@@ -1,0 +1,3 @@
+import pluraldo
+
+pluraldo.cli()

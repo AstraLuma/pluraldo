@@ -8,7 +8,6 @@ import email.policy
 import typing
 
 import anyio
-import platformdirs
 
 
 _StorePolicy = email.policy.default.clone(linesep='\r\n', max_line_length=None, utf8=True)
@@ -51,12 +50,18 @@ class Document(email.message.Message):
     @classmethod
     def from_markdown(cls, body: str, headers: dict[str, str]|None=None) -> typing.Self:
         self = cls()
-        # Not sure how to handle charset, or tell it to just use UTF-8
         self.set_payload(body, _StoreCharset())
         self.set_type('text/markdown')
         if headers:
             for key, value in headers.items():
                 self[key] = value
+        return self
+
+    @classmethod
+    def from_headers(cls, **headers) -> typing.Self:
+        self = cls()
+        for key, value in headers.items():
+            self[key] = value
         return self
 
     @classmethod
@@ -69,9 +74,8 @@ class MimeStore:
     def __init__(self, root: anyio.Path):
         self.root = root
 
-    @classmethod
-    def for_pluraldo(cls) -> typing.Self:
-        return cls(platformdirs.user_data_dir("pluraldo", "Lumami"))
+    def __repr__(self):
+        return f"{type(self).__name__}({self.root!r})"
 
     async def keys(self) -> typing.AsyncIterator[str]:
         async for f in self.root.iterdir():
@@ -91,7 +95,10 @@ class MimeStore:
         return self.root / key
 
     async def get(self, key: str) -> Document:
-        payload = await self._file(key).read_bytes()
+        try:
+            payload = await self._file(key).read_bytes()
+        except FileNotFoundError as exc:
+            raise KeyError(f"Key {key!r} not found") from exc
         return Document.from_bytes(payload)
 
     async def set(self, key: str, value: Document):
