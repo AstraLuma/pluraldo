@@ -15,3 +15,8 @@ install:
 # Run the pre-commit hooks
 hooks:
   pre-commit run --all-files
+
+
+# Run pluraldo
+pdo *ARGS:
+  poetry run pluraldo {{ARGS}}

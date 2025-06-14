@@ -25,9 +25,9 @@ async def whoami():
     ps = await PStore.get()
     name = await ps.get_front()
     if name is None:
-        click.echo("No front")
+        click.echo("You are no one")
     else:
-        click.echo(f"Front: {name}")
+        click.echo(f"{name}")
 
 
 @cli.command()
@@ -39,21 +39,21 @@ async def switch(name):
     click.echo(f"=> switched to {name}")
 
 
-@cli.command()
-@entry
-async def list():
-    ps = await PStore.get()
-    async for tid, title in ps.tasks_by_title():
-        click.echo(f"{tid}: {title}")
-
-
 @cli.group()
 def task():
     pass
 
 
-@task.command()
+@task.command("ls")
 @entry
-async def add():
+async def task_ls():
+    ps = await PStore.get()
+    async for tid, title in ps.tasks_by_title():
+        click.echo(f"{tid}: {title}")
+
+
+@task.command("add")
+@entry
+async def task_add():
     ps = await PStore.get()
     await ps.add_mock_task()

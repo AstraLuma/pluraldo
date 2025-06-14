@@ -2,6 +2,7 @@
 Storage, but in pluraldo's terms
 """
 
+import contextlib
 import typing
 
 import anyio
@@ -22,21 +23,27 @@ class PStore:
         await self._store.root.mkdir(parents=True, exist_ok=True)
         return self
 
+    @contextlib.asynccontextmanager
+    async def _mutate_doc(self, key, default_headers={}):
+        try:
+            doc = await self._store.get(key)
+        except KeyError:
+            doc = Document.from_headers(default_headers)
+
+        yield doc
+
+        await self._store.set(key, doc)
+
     async def get_front(self) -> str | None:
         try:
             doc = await self._store.get("_context")
+            return doc["Front"]
         except KeyError:
             return
-        else:
-            return doc["Front"]
 
     async def set_front(self, name: str):
-        try:
-            doc = await self._store.get("_context")
-        except KeyError:
-            doc = Document.from_headers(Kind="context")
-        doc["Front"] = name
-        await self._store.set("_context", doc)
+        async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
+            doc["Front"] = name
 
     async def tasks_by_title(self) -> typing.AsyncIterator[tuple[str, str]]:
         """
@@ -51,3 +58,14 @@ class PStore:
             "Help. Get it.", {"Kind": "task", "Title": "Get Help"}
         )
         await self._store.set("t-42", doc)
+
+    async def get_project(self) -> str | None:
+        try:
+            doc = await self._store.get("_context")
+            return doc["Current-Project"]
+        except KeyError:
+            return
+
+    async def set_project(self, name: str):
+        async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
+            doc["Current-Project"] = name
