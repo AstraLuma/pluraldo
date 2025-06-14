@@ -102,3 +102,6 @@ class PStore:
     async def update_task(self, tid: str, task: Document):
         assert task["Kind"] == "task"
         await self._store.set(tid, task)
+
+    async def del_task(self, tid: str):
+        await self._store.del_(tid)

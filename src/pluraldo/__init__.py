@@ -167,3 +167,20 @@ async def task_edit(task):
     await editor.run_async()
 
     await ps.update_task(task, doc)
+
+
+@task.command("rm")
+@click.argument("task")
+@entry
+async def task_del(task):
+    """
+    Delete a task, either in the current project (42) or globally (PROJ-42)
+    """
+    ps = await PStore.get()
+    task = await _resolve_task(ps, task)
+    try:
+        await ps.del_task(task)
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
+    else:
+        click.echo(f"=> Task {task} deleted")
