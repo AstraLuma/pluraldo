@@ -48,6 +48,20 @@ class PStore:
             del doc["Front"]
             doc["Front"] = name
 
+    async def get_projects(self) -> typing.AsyncIterator[str]:
+        """
+        Enumerate projects by name
+        """
+        projects = set()
+        async for fn in self._store.keys():
+            if fn == "_context":
+                # Skip the context file
+                continue
+            proj, _ = fn.split("-")
+            if proj not in projects:
+                projects.add(proj)
+                yield proj
+
     async def get_project(self) -> str | None:
         try:
             doc = await self._store.get("_context")
