@@ -85,7 +85,7 @@ async def task_ls(show_all):
     project = await ps.get_project()
     if show_all:
         project = None
-    async for tid, title in ps.tasks_by_title(project):
+    for tid, title in sorted([t async for t in ps.tasks_by_title(project)]):
         click.echo(f"{tid}: {title}")
 
 
