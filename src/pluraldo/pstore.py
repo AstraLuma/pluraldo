@@ -54,7 +54,7 @@ class PStore:
         """
         projects = set()
         async for fn in self._store.keys():
-            if fn == "_context":
+            if "-" not in fn:
                 # Skip the context file
                 continue
             proj, _ = fn.split("-")
