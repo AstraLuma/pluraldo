@@ -81,11 +81,18 @@ async def task_ls(show_all):
     """
     List tasks in the current project
     """
+
+    def _task_key(t):
+        tid, _ = t
+        proj, _, ordinal = tid.partition("-")
+        return proj, int(ordinal)
+
     ps = await PStore.get()
     project = await ps.get_project()
     if show_all:
         project = None
-    async for tid, title in ps.tasks_by_title(project):
+    tasks = [t async for t in ps.tasks_by_title(project)]
+    for tid, title in sorted(tasks, key=_task_key):
         click.echo(f"{tid}: {title}")
 
 
