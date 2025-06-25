@@ -49,6 +49,20 @@ class PStore:
             del doc["Front"]
             doc["Front"] = name
 
+    async def get_projects(self) -> typing.AsyncIterator[str]:
+        """
+        Enumerate projects by name
+        """
+        projects = set()
+        async for fn in self._store.keys():
+            if "-" not in fn:
+                # Skip the context file
+                continue
+            proj, _ = fn.split("-")
+            if proj not in projects:
+                projects.add(proj)
+                yield proj
+
     async def get_project(self) -> str | None:
         # Get the current project. If the environment variable
         #   `PLURALDO_PROJECT` is set, use that. Otherwise, use the currently
