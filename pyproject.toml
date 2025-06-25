@@ -1,6 +1,6 @@
 [project]
 name = "pluraldo"
-version = "0.1.0"
+dynamic = ["version"]
 description = "todo for plurals"
 authors = [
     {name = "Jamie Bliss",email = "jamie@ivyleav.es"},
@@ -15,14 +15,21 @@ dependencies = [
     "textual[syntax] (>=3.4.0,<4.0.0)",
 ]
 
-
 [project.scripts]
 pluraldo = 'pluraldo:cli'
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry]
+version = "0.0.0"
 
 [tool.poetry.group.dev.dependencies]
 textual-dev = "^1.7.0"
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
