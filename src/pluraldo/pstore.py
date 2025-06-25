@@ -4,6 +4,7 @@ Storage, but in pluraldo's terms
 
 import contextlib
 import typing
+import os
 
 import anyio
 import platformdirs
@@ -49,6 +50,16 @@ class PStore:
             doc["Front"] = name
 
     async def get_project(self) -> str | None:
+        # Get the current project. If the environment variable
+        #   `PLURALDO_PROJECT` is set, use that. Otherwise, use the currently
+        #   set project.
+        
+        ## todo:
+        # this is a magic string being pulled from the environment, and 
+        #   that is very much not ideal.
+        if "PLURALDO_PROJECT" in os.environ:
+            proj = os.environ["PLURALDO_PROJECT"].upper()
+            return proj
         try:
             doc = await self._store.get("_context")
             proj = doc["Current-Project"]

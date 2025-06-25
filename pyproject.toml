@@ -3,7 +3,8 @@ name = "pluraldo"
 version = "0.1.0"
 description = "todo for plurals"
 authors = [
-    {name = "Jamie Bliss",email = "jamie@ivyleav.es"}
+    {name = "Jamie Bliss",email = "jamie@ivyleav.es"},
+    {name = "Aurynn Shaw",email = "self@aurynn.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.11,<4"
