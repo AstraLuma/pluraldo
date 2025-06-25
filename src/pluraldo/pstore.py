@@ -57,7 +57,7 @@ class PStore:
         ## todo:
         # this is a magic string being pulled from the environment, and 
         #   that is very much not ideal.
-        if os.environ.get("PLURALDO_PROJECT", None):
+        if "PLURALDO_PROJECT" in os.environ:
             proj = os.environ["PLURALDO_PROJECT"].upper()
             return proj
         try:
