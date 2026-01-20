@@ -12,6 +12,7 @@ This is only for the `_context` document.
 
 The body is empty.
 
+
 ## Task
 A thing to do
 
@@ -24,10 +25,13 @@ A thing to do
 
 The body is markdown, containing the full description.
 
+Task status icons: ❓, ✏️, ✅
+
 
 ## Alter
 
 Alter is an implied object with only a string username.
+
 
 ## Project
 
