@@ -144,6 +144,7 @@ class MimeStore:
             yield f.name
 
     async def items(self) -> typing.AsyncIterator[tuple[str, Document]]:
+        # TODO: Parallelize the file read.
         async for f in self.root.iterdir():
             payload = await f.read_bytes()
             yield f.name, Document.from_bytes(payload)
@@ -172,3 +173,16 @@ class MimeStore:
 
     async def del_(self, key: str):
         await self._file(key).unlink()
+
+    async def search(
+        self, pred: typing.Callable[[str, Document], bool]
+    ) -> typing.AsyncIterator[tuple[str, Document]]:
+        """
+        Searches through all documents, calling pred on each one. Returns the set of Documents that pass.
+
+        Note that this might be multi-tasked, multi-threaded, or multi-processed.
+        """
+        # TODO: Spread this out among tasks.
+        async for key, doc in self.items():
+            if pred(key, doc):
+                yield key, doc
