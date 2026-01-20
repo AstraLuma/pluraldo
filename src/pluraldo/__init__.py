@@ -284,10 +284,35 @@ async def task_start(task):
 async def task_done(task, take):
     """
     Finish a task, either in the current project (42) or globally (PROJ-42).
+
+    You can omit the task name if there's only one assigned to you that's open.
     """
+    if not task and take:
+        raise click.UsageError("Can't imply a someone else's task.")
     ps = await PStore.get()
-    task = await _resolve_task(ps, task)
     alter = await ps.get_front()
+    if task:
+        task = await _resolve_task(ps, task)
+    else:
+        proj = await ps.get_project()
+        if proj:
+            prefix = "{proj}-"
+            search = ps.task_search(
+                lambda k, d: k.startswith(prefix)
+                and d["Assignee"] == alter
+                and d["Status"] == "open"
+            )
+        else:
+            search = ps.task_search(
+                lambda k, d: d["Assignee"] == alter and d["Status"] == "open"
+            )
+        async for tid, _ in search:
+            if task:
+                raise click.UsageError("Multiple possible tasks found")
+            else:
+                task = tid
+        if task is None:
+            raise click.UsageError("None of your tasks are open")
     try:
         async with ps.mutate_task(task, must_exist=True) as doc:
             del doc["Status"]
