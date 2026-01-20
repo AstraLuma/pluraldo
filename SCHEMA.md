@@ -10,13 +10,15 @@ This is only for the `_context` document.
 * `Front` (string, missing): The current alter, as a username
 * `Current-Project` (string, missing): The current project, as an all caps prefix.
 
+The body is empty.
+
 ## Task
 A thing to do, as PROJ-1234
 
 * `Kind` (string): `"task"`
 * Project is in the document key
 * `Title` (string): Short description of the task
-* `Creator` (string): The alter that created the task
-* `Assignee` (string): The alter that's currently working on the task, or empty string
+* `Creator` (string): The alter that created the task, as a username
+* `Assignee` (string): The alter that's currently working on the task as a username, or empty string
 
-The body is markdown.
+The body is markdown, containing the full description.

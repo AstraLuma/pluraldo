@@ -27,7 +27,10 @@ class PStore:
         return self
 
     @contextlib.asynccontextmanager
-    async def _mutate_doc(self, key, default_headers={}):
+    async def _mutate_doc(
+        self, key, default_headers={}
+    ) -> typing.AsyncIterator[Document]:
+        # FIXME: Locking
         try:
             doc = await self._store.get(key)
         except KeyError:
@@ -130,3 +133,9 @@ class PStore:
 
     async def del_task(self, tid: str):
         await self._store.del_(tid)
+
+    @contextlib.asynccontextmanager
+    async def mutate_task(self, tid: str) -> typing.AsyncIterator[Document]:
+        async with self._mutate_doc(tid) as task:
+            assert task["Kind"] == "task"
+            yield task

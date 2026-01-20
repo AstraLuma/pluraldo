@@ -216,3 +216,31 @@ async def task_del(task):
         raise click.UsageError(f"Task {task} does not exist")
     else:
         click.echo(f"=> Task {task} deleted")
+
+
+@task.command("start")
+@click.argument("task")
+@entry
+async def task_start(task):
+    """
+    Start a task, either in the current project (42) or globally (PROJ-42)
+    """
+    ps = await PStore.get()
+    task = await _resolve_task(ps, task)
+    async with ps.mutate_task(task) as doc:
+        raise NotImplementedError("Tasks don't have a status")
+        doc
+
+
+@task.command("done")
+@click.argument("task", required=False)
+@entry
+async def task_done(task):
+    """
+    Finish a task, either in the current project (42) or globally (PROJ-42)
+    """
+    ps = await PStore.get()
+    task = await _resolve_task(ps, task)
+    async with ps.mutate_task(task) as doc:
+        raise NotImplementedError("Tasks don't have a status")
+        doc
