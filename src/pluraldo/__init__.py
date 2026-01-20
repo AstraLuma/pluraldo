@@ -267,8 +267,13 @@ async def task_start(task):
         async with ps.mutate_task(task, must_exist=True) as doc:
             del doc["Assignee"]
             doc["Assignee"] = alter
+
+            del doc["Status"]
+            doc["Status"] = "open"
     except KeyError:
         raise click.UsageError(f"Task {task} does not exist")
+    else:
+        click.echo(f"=> Task {task} ({doc['Title']}) marked as started")
 
 
 @task.command("done")
@@ -289,5 +294,10 @@ async def task_done(task, take):
             if take:
                 del doc["Assignee"]
                 doc["Assignee"] = alter
+
+            del doc["Status"]
+            doc["Status"] = "done"
     except KeyError:
         raise click.UsageError(f"Task {task} does not exist")
+    else:
+        click.echo(f"=> Task {task} ({doc['Title']}) marked as done")
