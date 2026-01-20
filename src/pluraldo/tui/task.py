@@ -31,7 +31,10 @@ class TaskEditor(Screen):
 
         yield (
             be := TextArea.code_editor(
-                self.doc.get_payload(), language="markdown", soft_wrap=True, id="body"
+                str(self.doc.get_payload()),
+                language="markdown",
+                soft_wrap=True,
+                id="body",
             )
         )
         self._body_editor = be

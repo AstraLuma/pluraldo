@@ -45,7 +45,7 @@ class PStore:
             doc = await self._store.get("_context")
             return doc["Front"]
         except KeyError:
-            return
+            return None
 
     async def set_front(self, name: str):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
@@ -84,7 +84,7 @@ class PStore:
                 proj = proj.upper()
             return proj
         except KeyError:
-            return
+            return None
 
     async def set_project(self, name: str | None):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
