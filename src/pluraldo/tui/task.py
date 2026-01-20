@@ -37,7 +37,7 @@ class TaskEditor(Screen):
         yield Label("Status")
         yield (
             s := Select(
-                value=self.doc["Status"],
+                value=self.doc["Status"] or "open",
                 options=TASK_STATUSES,
                 id="status",
                 allow_blank=False,
@@ -67,8 +67,11 @@ class TaskEditor(Screen):
         del self.doc["Title"]
         self.doc["Title"] = self._title_editor.value
 
-        del self.doc["Status"]
-        self.doc["Status"] = self._status_editor.value
+        if self._status_editor.value is Select.BLANK:
+            print("Warning: Illegal blank status")
+        else:
+            del self.doc["Status"]
+            self.doc["Status"] = self._status_editor.value
 
 
 class TaskEditorApp(App):

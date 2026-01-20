@@ -99,10 +99,18 @@ def task():
     """
 
 
+STATUS_ICONS = {
+    ...: "❓",
+    "open": "✏️",
+    "done": "✅",
+}
+
+
 @task.command("ls")
 @click.option("--all", "show_all", is_flag=True, help="Show tasks in all projects")
+@click.option("--done", "show_done", is_flag=True, help="Show finished tasks")
 @entry
-async def task_ls(show_all):
+async def task_ls(show_all, show_done):
     """
     List tasks in the current project
     """
@@ -114,11 +122,32 @@ async def task_ls(show_all):
 
     ps = await PStore.get()
     project = await ps.get_project()
-    if show_all:
-        project = None
-    tasks = [t async for t in ps.tasks_by_title(project)]
-    for tid, title in sorted(tasks, key=_task_key):
-        click.echo(f"{tid}: {title}")
+    prefix = f"{project.upper()}-"
+    match (show_all, show_done):
+        case (False, False):
+
+            def pred(k, d):
+                return k.startswith(prefix) and d["Status"] != "done"
+        case (False, True):
+
+            def pred(k, d):
+                return k.startswith(prefix)
+        case (True, False):
+
+            def pred(k, d):
+                return d["Status"] != "done"
+        case (True, True):
+
+            def pred(k, d):
+                return True
+
+    tasks = [t async for t in ps.task_search(pred)]
+    for tid, task in sorted(tasks, key=_task_key):
+        if task["Status"]:
+            icon = STATUS_ICONS.get(task["Status"].lower(), STATUS_ICONS[...])
+        else:
+            icon = STATUS_ICONS[...]
+        click.echo(f"{tid}{icon}: {task['Title']}")
 
 
 @task.command("add")
