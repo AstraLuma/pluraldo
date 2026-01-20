@@ -103,6 +103,7 @@ STATUS_ICONS = {
     ...: "❓",
     "open": "✏️",
     "done": "✅",
+    "blocked": "🛑",
 }
 
 

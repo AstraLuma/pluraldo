@@ -7,6 +7,7 @@ from ..mimestore import Document
 TASK_STATUSES = [
     ("✏️ Open", "open"),
     ("✅ Done", "done"),
+    ("🛑 Blocked", "blocked"),
 ]
 
 

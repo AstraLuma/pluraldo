@@ -21,11 +21,11 @@ A thing to do
 * `Title` (string): Short description of the task
 * `Creator` (string): The alter that created the task, as a username
 * `Assignee` (string): The alter that's currently working on the task as a username, or empty string
-* `Status` (string): One of `"open"`, `"done"`
+* `Status` (string): One of `"open"`, `"done"`, `"blocked"`
 
 The body is markdown, containing the full description.
 
-Task status icons: ❓, ✏️, ✅
+Task status icons: ❓, ✏️, ✅, 🛑
 
 
 ## Alter
