@@ -1,7 +1,7 @@
 # Schema
 Since pluraldo uses a schemaless store, the schema needs to be tracked informally.
 
-Documents have headers and a body. Multiple copies of the same header may be present.
+Documents have an ID, headers, and a body. Multiple copies of the same header may be present. It is assumed that documents associated with a project (eg Tasks) will have IDs in the form of PROJ-123
 
 ## Context
 This is only for the `_context` document.
@@ -13,12 +13,22 @@ This is only for the `_context` document.
 The body is empty.
 
 ## Task
-A thing to do, as PROJ-1234
+A thing to do
 
 * `Kind` (string): `"task"`
 * Project is in the document key
 * `Title` (string): Short description of the task
 * `Creator` (string): The alter that created the task, as a username
 * `Assignee` (string): The alter that's currently working on the task as a username, or empty string
+* `Status` (string): One of `"open"`, `"done"`
 
 The body is markdown, containing the full description.
+
+
+## Alter
+
+Alter is an implied object with only a string username.
+
+## Project
+
+Project is an implied object with only a string project prefix.

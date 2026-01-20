@@ -2,7 +2,7 @@ TaskEditor {
     layout: grid;
     grid-size: 2;
     grid-columns: auto 1fr;
-    grid-rows: auto auto auto 1fr;
+    grid-rows: auto auto auto auto 1fr;
 }
 
 TaskEditor > #body {

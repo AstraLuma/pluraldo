@@ -1,8 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, TextArea, Label, Input
+from textual.widgets import Header, Footer, TextArea, Label, Input, Select
 
 from ..mimestore import Document
+
+TASK_STATUSES = [
+    ("✏️ Open", "open"),
+    ("✅ Done", "done"),
+]
 
 
 class TaskEditor(Screen):
@@ -29,6 +34,17 @@ class TaskEditor(Screen):
         yield (i := Input(self.doc["Title"], id="title"))
         self._title_editor = i
 
+        yield Label("Status")
+        yield (
+            s := Select(
+                value=self.doc["Status"],
+                options=TASK_STATUSES,
+                id="status",
+                allow_blank=False,
+            )
+        )
+        self._status_editor = s
+
         yield (
             be := TextArea.code_editor(
                 str(self.doc.get_payload()),
@@ -50,6 +66,9 @@ class TaskEditor(Screen):
 
         del self.doc["Title"]
         self.doc["Title"] = self._title_editor.value
+
+        del self.doc["Status"]
+        self.doc["Status"] = self._status_editor.value
 
 
 class TaskEditorApp(App):
@@ -77,7 +96,13 @@ class TaskEditorApp(App):
 if __name__ == "__main__":
     doc = Document.from_markdown(
         "Some details",
-        {"Kind": "task", "Title": "A task", "Creator": "Alice", "Assignee": "Ella"},
+        {
+            "Kind": "task",
+            "Title": "A task",
+            "Creator": "Alice",
+            "Assignee": "Ella",
+            "Status": "open",
+        },
     )
     app = TaskEditorApp("TEST-42", doc)
     app.run()

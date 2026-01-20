@@ -137,8 +137,16 @@ async def task_add(project):
     alter = await ps.get_front()
 
     tid = await ps.get_next_id(project)
+    # FIXME: Reserve this ID
     task = Document.from_markdown(
-        "", {"Kind": "task", "Title": "", "Creator": alter or "", "Assignee": ""}
+        "",
+        {
+            "Kind": "task",
+            "Title": "",
+            "Creator": alter or "",
+            "Assignee": "",
+            "Status": "open",
+        },
     )
 
     editor = TaskEditorApp(tid, task)
@@ -191,14 +199,11 @@ async def task_edit(task):
     ps = await PStore.get()
     task = await _resolve_task(ps, task)
     try:
-        doc = await ps.get_task(task)
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            editor = TaskEditorApp(task, doc)
+            await editor.run_async()
     except KeyError:
         raise click.UsageError(f"Task {task} does not exist")
-
-    editor = TaskEditorApp(task, doc)
-    await editor.run_async()
-
-    await ps.update_task(task, doc)
 
 
 @task.command("rm")
@@ -223,24 +228,37 @@ async def task_del(task):
 @entry
 async def task_start(task):
     """
-    Start a task, either in the current project (42) or globally (PROJ-42)
+    Start a task, either in the current project (42) or globally (PROJ-42). Also
+    updates the assignee.
     """
     ps = await PStore.get()
     task = await _resolve_task(ps, task)
-    async with ps.mutate_task(task) as doc:
-        raise NotImplementedError("Tasks don't have a status")
-        doc
+    alter = await ps.get_front()
+    try:
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            del doc["Assignee"]
+            doc["Assignee"] = alter
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
 
 
 @task.command("done")
 @click.argument("task", required=False)
+@click.option("--take", "take", is_flag=True, help="Also set the assignee")
 @entry
-async def task_done(task):
+async def task_done(task, take):
     """
-    Finish a task, either in the current project (42) or globally (PROJ-42)
+    Finish a task, either in the current project (42) or globally (PROJ-42).
     """
     ps = await PStore.get()
     task = await _resolve_task(ps, task)
-    async with ps.mutate_task(task) as doc:
-        raise NotImplementedError("Tasks don't have a status")
-        doc
+    alter = await ps.get_front()
+    try:
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            del doc["Status"]
+            doc["Status"] = "done"
+            if take:
+                del doc["Assignee"]
+                doc["Assignee"] = alter
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
