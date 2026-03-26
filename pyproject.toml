@@ -13,6 +13,8 @@ dependencies = [
     "platformdirs (>=4.3.8,<5.0.0)",
     "click (>=8.2.1,<9.0.0)",
     "textual[syntax] (>=3.4.0,<4.0.0)",
+    "tree-sitter (==0.23.0)",
+    "tree-sitter-markdown (==0.3.2)"
 ]
 
 [project.scripts]
