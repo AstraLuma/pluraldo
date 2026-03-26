@@ -20,3 +20,8 @@ hooks:
 # Run pluraldo
 pdo *ARGS:
   poetry run pluraldo {{ARGS}}
+
+
+# Run mypy
+types:
+  poetry run mypy src

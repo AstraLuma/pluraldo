@@ -27,11 +27,20 @@ class PStore:
         return self
 
     @contextlib.asynccontextmanager
-    async def _mutate_doc(self, key, default_headers={}):
+    async def _mutate_doc(
+        self,
+        key: str,
+        default_headers: dict[str, typing.Any] = {},
+        must_exist: bool = False,
+    ) -> typing.AsyncIterator[Document]:
+        # FIXME: Locking
         try:
             doc = await self._store.get(key)
         except KeyError:
-            doc = Document.from_headers(**default_headers)
+            if must_exist:
+                raise
+            else:
+                doc = Document.from_headers(**default_headers)
 
         yield doc
 
@@ -42,7 +51,7 @@ class PStore:
             doc = await self._store.get("_context")
             return doc["Front"]
         except KeyError:
-            return
+            return None
 
     async def set_front(self, name: str):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
@@ -81,7 +90,7 @@ class PStore:
                 proj = proj.upper()
             return proj
         except KeyError:
-            return
+            return None
 
     async def set_project(self, name: str | None):
         async with self._mutate_doc("_context", {"Kind": "context"}) as doc:
@@ -91,19 +100,16 @@ class PStore:
             else:
                 del doc["Current-Project"]
 
-    async def tasks_by_title(
-        self, project: str | None = None
-    ) -> typing.AsyncIterator[tuple[str, str]]:
+    async def task_search(
+        self, pred: typing.Callable[[str, Document], bool]
+    ) -> typing.AsyncIterator[tuple[str, Document]]:
         """
-        Enumerate tasks by id and title
+        Search the tasks.
         """
-        if project:
-            prefix = f"{project.upper()}-"
-        else:
-            prefix = ""
-        async for id, doc in self._store.items():
-            if doc["Kind"] == "task" and id.startswith(prefix):
-                yield id, doc["Title"]
+        async for tid, task in self._store.search(
+            lambda k, d: d["Kind"] == "task" and pred(k, d)
+        ):
+            yield tid, task
 
     async def get_next_id(self, project: str) -> str:
         """
@@ -130,3 +136,15 @@ class PStore:
 
     async def del_task(self, tid: str):
         await self._store.del_(tid)
+
+    @contextlib.asynccontextmanager
+    async def mutate_task(
+        self, tid: str, *, must_exist: bool = False
+    ) -> typing.AsyncIterator[Document]:
+        async with self._mutate_doc(
+            tid,
+            must_exist=must_exist,
+            default_headers={"Kind": "task", "Status": "open"},
+        ) as task:
+            assert task["Kind"] == "task"
+            yield task

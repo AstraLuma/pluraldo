@@ -78,8 +78,11 @@ class Document(email.message.Message):
 
     @classmethod
     def from_bytes(cls, message: bytes) -> typing.Self:
-        p = email.parser.BytesParser(cls, policy=_StorePolicy)
-        return p.parsebytes(message)
+        p = email.parser.BytesParser(
+            typing.cast(typing.Callable[[], email.message.EmailMessage], cls),
+            policy=_StorePolicy,
+        )
+        return typing.cast(typing.Self, p.parsebytes(message))
 
 
 # Characters that can't appear in the name, mostly Windows

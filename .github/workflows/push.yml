@@ -33,14 +33,14 @@ jobs:
   #     - name: Run tests
   #       run: poetry run pytest --verbose
 
-  # mypy:
+  mypy:
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install poetry
-  #       run: pipx install poetry
-  #     - uses: actions/setup-python@v5
-  #     - run: poetry install
-  #     - run: poetry run mypy src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v5
+      - run: poetry install
+      - run: poetry run mypy src

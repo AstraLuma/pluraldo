@@ -99,10 +99,19 @@ def task():
     """
 
 
+STATUS_ICONS = {
+    ...: "❓",
+    "open": "✏️",
+    "done": "✅",
+    "blocked": "🛑",
+}
+
+
 @task.command("ls")
 @click.option("--all", "show_all", is_flag=True, help="Show tasks in all projects")
+@click.option("--done", "show_done", is_flag=True, help="Show finished tasks")
 @entry
-async def task_ls(show_all):
+async def task_ls(show_all, show_done):
     """
     List tasks in the current project
     """
@@ -114,11 +123,32 @@ async def task_ls(show_all):
 
     ps = await PStore.get()
     project = await ps.get_project()
-    if show_all:
-        project = None
-    tasks = [t async for t in ps.tasks_by_title(project)]
-    for tid, title in sorted(tasks, key=_task_key):
-        click.echo(f"{tid}: {title}")
+    prefix = f"{project.upper()}-"
+    match (show_all, show_done):
+        case (False, False):
+
+            def pred(k, d):
+                return k.startswith(prefix) and d["Status"] != "done"
+        case (False, True):
+
+            def pred(k, d):
+                return k.startswith(prefix)
+        case (True, False):
+
+            def pred(k, d):
+                return d["Status"] != "done"
+        case (True, True):
+
+            def pred(k, d):
+                return True
+
+    tasks = [t async for t in ps.task_search(pred)]
+    for tid, task in sorted(tasks, key=_task_key):
+        if task["Status"]:
+            icon = STATUS_ICONS.get(task["Status"].lower(), STATUS_ICONS[...])
+        else:
+            icon = STATUS_ICONS[...]
+        click.echo(f"{tid}{icon}: {task['Title']}")
 
 
 @task.command("add")
@@ -137,8 +167,16 @@ async def task_add(project):
     alter = await ps.get_front()
 
     tid = await ps.get_next_id(project)
+    # FIXME: Reserve this ID
     task = Document.from_markdown(
-        "", {"Kind": "task", "Title": "", "Creator": alter or "", "Assignee": ""}
+        "",
+        {
+            "Kind": "task",
+            "Title": "",
+            "Creator": alter or "",
+            "Assignee": "",
+            "Status": "open",
+        },
     )
 
     editor = TaskEditorApp(tid, task)
@@ -191,14 +229,11 @@ async def task_edit(task):
     ps = await PStore.get()
     task = await _resolve_task(ps, task)
     try:
-        doc = await ps.get_task(task)
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            editor = TaskEditorApp(task, doc)
+            await editor.run_async()
     except KeyError:
         raise click.UsageError(f"Task {task} does not exist")
-
-    editor = TaskEditorApp(task, doc)
-    await editor.run_async()
-
-    await ps.update_task(task, doc)
 
 
 @task.command("rm")
@@ -216,3 +251,79 @@ async def task_del(task):
         raise click.UsageError(f"Task {task} does not exist")
     else:
         click.echo(f"=> Task {task} deleted")
+
+
+@task.command("start")
+@click.argument("task")
+@entry
+async def task_start(task):
+    """
+    Start a task, either in the current project (42) or globally (PROJ-42). Also
+    updates the assignee.
+    """
+    ps = await PStore.get()
+    task = await _resolve_task(ps, task)
+    alter = await ps.get_front()
+    try:
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            del doc["Assignee"]
+            doc["Assignee"] = alter
+
+            del doc["Status"]
+            doc["Status"] = "open"
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
+    else:
+        click.echo(f"=> Task {task} ({doc['Title']}) marked as started")
+
+
+@task.command("done")
+@click.argument("task", required=False)
+@click.option("--take", "take", is_flag=True, help="Also set the assignee")
+@entry
+async def task_done(task, take):
+    """
+    Finish a task, either in the current project (42) or globally (PROJ-42).
+
+    You can omit the task name if there's only one assigned to you that's open.
+    """
+    if not task and take:
+        raise click.UsageError("Can't imply a someone else's task.")
+    ps = await PStore.get()
+    alter = await ps.get_front()
+    if task:
+        task = await _resolve_task(ps, task)
+    else:
+        proj = await ps.get_project()
+        if proj:
+            prefix = "{proj}-"
+            search = ps.task_search(
+                lambda k, d: k.startswith(prefix)
+                and d["Assignee"] == alter
+                and d["Status"] == "open"
+            )
+        else:
+            search = ps.task_search(
+                lambda k, d: d["Assignee"] == alter and d["Status"] == "open"
+            )
+        async for tid, _ in search:
+            if task:
+                raise click.UsageError("Multiple possible tasks found")
+            else:
+                task = tid
+        if task is None:
+            raise click.UsageError("None of your tasks are open")
+    try:
+        async with ps.mutate_task(task, must_exist=True) as doc:
+            del doc["Status"]
+            doc["Status"] = "done"
+            if take:
+                del doc["Assignee"]
+                doc["Assignee"] = alter
+
+            del doc["Status"]
+            doc["Status"] = "done"
+    except KeyError:
+        raise click.UsageError(f"Task {task} does not exist")
+    else:
+        click.echo(f"=> Task {task} ({doc['Title']}) marked as done")
