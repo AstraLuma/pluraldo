@@ -57,7 +57,11 @@ class TaskEditor(Screen):
         self._body_editor = be
 
     async def on_unmount(self, event):
-        self.doc.set_payload(self._body_editor.text)
+      
+        try:
+          self.doc.set_payload(self._body_editor.text)
+        except AttributeError:
+          return None
 
         del self.doc["Creator"]
         self.doc["Creator"] = self._creator_editor.value
